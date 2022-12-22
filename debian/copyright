@@ -1,0 +1,141 @@
+Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: ortp
+Upstream-Contact: Simon Morlat <simon.morlat@linphone.org>
+Source: https://github.com/BelledonneCommunications/ortp/tags
+
+Files: *
+Copyright: 2004, Simon Morlat
+  2010,2014-2015,2017, Belledonne Communications SARL
+ <sales@belledonne-communications.com>
+License-Grant:
+ This program is free software; you can redistribute it and/or modify it
+ under the terms of the GNU General Public License as published by the
+ Free Software Foundation; either version 2 of the License, or (at your
+ option) any later version.
+License: GPL-2+
+ FIXME
+
+Files: src/tests/*
+Copyright: 2001, Simon Morlat <simon.morlat@linphone.org>
+  2015, Belledonne Communications SARL
+ <sales@belledonne-communications.com>
+License-Grant:
+ This library is free software; you can redistribute it and/or modify it
+ under the terms of the GNU Lesser General Public License as published
+ by the Free Software Foundation; either version 2.1 of the License, or
+ (at your option) any later version.
+License: LGPL-2.1+
+
+Files:
+ build/wp8/oRTP/inttypes.h
+ build/wp8/oRTP/stdint.h
+ include/MSVC/inttypes.h
+ include/MSVC/stdint.h
+Copyright: 2006-2008 Alexander Chemeris
+License: BSD-3-Clause~author
+
+Files:
+ include/ortp/b64.h
+ src/b64.c
+Copyright: 2004-2008 Matthew Wilson and Synesis Software
+ <http://synesis.com.au/software/>
+License: BSD-3-Clause~Wilson-Synesis
+
+Files: m4/ld-output-def.m4
+Copyright: 2008-2010 Free Software Foundation, Inc.
+License: FSFULLR
+
+Files: debian/*
+Copyright: 2015 Felix Lechner <felix.lechner@gmail.com>
+License-Grant:
+ This package is free software; you can redistribute it and/or modify it
+ under the terms of the GNU General Public License as published by the
+ Free Software Foundation; either version 2 of the License, or (at your
+ option) any later version.
+ .
+ This package is distributed in the hope that it will be useful, but
+ WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ General Public License for more details.
+ .
+ You should have received a copy of the GNU General Public License along
+ with this program. If not, see <http://www.gnu.org/licenses/>
+License: GPL-2+
+
+Files: debian/copyright-check
+Copyright: 2016-2017, Jonas Smedegaard <dr@jones.dk>
+License-Grant:
+ This program is free software; you can redistribute it and/or modify it
+ under the terms of the GNU General Public License as published by the
+ Free Software Foundation; either version 3, or (at your option) any
+ later version.
+License: GPL-3+
+
+License: LGPL-2.1+
+License-Reference: /usr/share/common-licenses/LGPL-2.1
+
+License: GPL-2+
+License-Reference: /usr/share/common-licenses/GPL-2
+
+License: GPL-3+
+License-Reference: /usr/share/common-licenses/GPL-3
+
+License: BSD-3-Clause~author
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+ .
+ 1. Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+ .
+ 2. Redistributions in binary form must reproduce the above copyright
+ notice, this list of conditions and the following disclaimer in the
+ documentation and/or other materials provided with the distribution.
+ .
+ 3. The name of the author may be used to endorse or promote products
+ derived from this software without specific prior written permission.
+ .
+ THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+ INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ POSSIBILITY OF SUCH DAMAGE.
+
+License: BSD-3-Clause~Wilson-Synesis
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+ .
+ - Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+ .
+ - Redistributions in binary form must reproduce the above copyright
+ notice, this list of conditions and the following disclaimer in the
+ documentation and/or other materials provided with the distribution.
+ .
+ - Neither the name(s) of Matthew Wilson and Synesis Software nor the
+ names of any contributors may be used to endorse or promote products
+ derived from this software without specific prior written permission.
+ .
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+ IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+ PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+License: FSFULLR
+ This file is free software; the Free Software Foundation gives
+ unlimited permission to copy and/or distribute it, with or without
+ modifications, as long as this notice is preserved.

@@ -1,0 +1,100 @@
+ortp (1:4.4.13-2) unstable; urgency=medium
+
+  * Team upload.
+  * Release to unstable.
+  * Drop Daniel Gnoutcheff from Uploaders
+  * Add myself to uploaders
+
+ -- Bernhard Schmidt <berni@debian.org>  Fri, 25 Dec 2020 14:35:31 +0100
+
+ortp (1:4.4.13-1) experimental; urgency=medium
+
+  * Team upload.
+  * New upstream version 4.4.13
+  * Change Vcs-* to linphone-stack subgroup
+
+ -- Bernhard Schmidt <berni@debian.org>  Mon, 07 Dec 2020 11:10:55 +0100
+
+ortp (1:4.4.0-1) experimental; urgency=medium
+
+  * New upstream version 4.4.0
+  * SONAME bump libortp14 -> libortp15, tighten build-dep on bctoolbox
+
+ -- Bernhard Schmidt <berni@debian.org>  Tue, 01 Sep 2020 00:30:42 +0200
+
+ortp (1:4.3.2-1) experimental; urgency=medium
+
+  * Team upload.
+  * New upstream version 4.3.2
+  * d/watch: Switch to upstream primary Gitlab, only use releases
+  * SONAME bump libortp13 -> libortp14
+  * Switch from symbols to shlibs, this is a tightly coupled library
+    solely used in the Linphone stack
+  * Adjust upstream paths
+  * Bump to debhelper-compat 12
+  * Update RFCs in package description (Closes: #856435)
+
+ -- Bernhard Schmidt <berni@debian.org>  Mon, 01 Jun 2020 23:10:38 +0200
+
+ortp (1:1.0.2-1) unstable; urgency=medium
+
+  * Team upload.
+  * Release to unstable
+
+ -- Bernhard Schmidt <berni@debian.org>  Wed, 10 Oct 2018 22:50:59 +0200
+
+ortp (1:1.0.2-0+exp2) experimental; urgency=medium
+
+  * Team upload.
+  * Make -dev depend on libbctoolbox-dev
+  * Update Vcs-* to salsa
+  * Drop Marc Purcell from Uploaders (at his own wish)
+
+ -- Bernhard Schmidt <berni@debian.org>  Fri, 16 Feb 2018 16:26:00 +0100
+
+ortp (1:1.0.2-0+exp1) experimental; urgency=medium
+
+  * Team upload.
+
+  [ Daniel Gnoutcheff ]
+  * Initial release separate from linphone (Closes: #785522)
+
+  [ Johannes 'josch' Schauer ]
+  * debian/control: bctoolbox-dev got renamed to libbctoolbox-dev
+  * debian/rules: no need to add duplicate rule for "build"
+  * Instead of patching CMakeLists.txt to remove rpath, pass CMAKE_SKIP_RPATH=ON
+  * debian/libortp12.docs: README -> README.md, remove TODO
+  * upstream bumped the soname from 12 to 13 - rename libortp12 to libortp13
+  * debian/patches: add fix-spelling patch
+  * debian/rules: Use hardening=+all
+  * debian/compat: Bump debhelper compatibility level to 10
+  * add debian/TODO
+  * run wrap-and-sort -abt
+  * debian/rules: .PHONY: build is not needed either
+
+  [ Jonas Smedegaard ]
+  * Tidy copyright info: Wrap license sections at 72 chars, and separate
+    paragraphs.
+  * Update copyright info: Relabel licenses derived from BSD-3-Clause.
+  * Update copyright info: Fix catch-all Files section to be licensed GPL-2+
+    (not LGPL-2.1+): Only tests are LGPL nowadays.
+  * Tidy copyright info: Sort files.
+  * Update copyright info: Add identifiers for some copyright holders.
+  * Update copyright info: Add m4 file, licensed FSFULLR.
+  * Update copyright info: Separate License grants and references from actual
+    licenses.
+  * Suppress arguably bogus lintian warning about shared license not written
+    verbatim but instead referenced in machine-readable form (see bug#786450).
+  * Add copyright-check helper tool.
+  * Add copyright hints, to ease tracking later changes.
+  * Update copyright info: Fix re-add licence grant for debian dir (including
+    boilerplate since this is apparently its canonical location, but rewrapped
+    at 72 chars). Add License grant for copyright-check tool.
+  * Update copyright hints.
+
+  [ Bernhard Schmidt ]
+  * New upstream version 1.0.2
+  * Update symbols for libortp13
+  * Tighten dependency on libbctoolbox-dev
+
+ -- Bernhard Schmidt <berni@debian.org>  Mon, 16 Oct 2017 00:58:33 +0200

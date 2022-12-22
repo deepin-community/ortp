@@ -1,0 +1,7 @@
+Document: ortp-apidoc
+Title: oRTP API documentation
+Section: Network/Communication
+
+Format: HTML
+Index: /usr/share/doc/libortp-dev/html/index.html
+Files: /usr/share/doc/libortp-dev/html/*

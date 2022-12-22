@@ -1,0 +1,73 @@
+Source: ortp
+Priority: optional
+Maintainer: Debian VoIP Team <pkg-voip-maintainers@lists.alioth.debian.org>
+Uploaders: Kilian Krause <kilian@debian.org>,
+           Tzafrir Cohen <tzafrir@debian.org>,
+           Felix Lechner <felix.lechner@gmail.com>,
+           Bernhard Schmidt <berni@debian.org>,
+Build-Depends: cmake (>= 3),
+               debhelper-compat (= 12),
+               doxygen,
+               libbctoolbox-dev (>= 4.4.0~),
+Standards-Version: 4.5.0
+Section: libs
+Homepage: http://www.linphone.org/technical-corner/ortp/overview
+Vcs-Browser: https://salsa.debian.org/pkg-voip-team/linphone-stack/ortp
+Vcs-Git: https://salsa.debian.org/pkg-voip-team/linphone-stack/ortp.git
+
+Package: libortp-dev
+Section: libdevel
+Architecture: any
+Multi-Arch: same
+Depends: libbctoolbox-dev (>= 4.4.0~),
+         libortp15 (= ${binary:Version}),
+         ${misc:Depends},
+Description: Development files for the ortp RTP library
+ This library implements RFC 3550 (RTP) and offers an easy to
+ use API with high-level and low-level access. It is part of
+ Linphone.
+ .
+ The main features are support for multiple profiles (AV profile
+ RFC 3551 being the default one); an optional packet scheduler
+ for synchronizing RTP recv and send; blocking or non-blocking
+ IO for RTP sessions; multiplexed IO; some of RFC 4733 for
+ telephone events over RTP.
+ .
+ This package contains the development files.
+
+Package: libortp-doc
+Section: doc
+Architecture: all
+Multi-Arch: foreign
+Depends: libjs-jquery,
+         ${misc:Depends},
+Suggests: libortp-dev,
+Description: oRTP API documentation
+ This library implements RFC 3550 (RTP) and offers an easy to
+ use API with high-level and low-level access. It is part of
+ Linphone.
+ .
+ The main features are support for multiple profiles (AV profile
+ RFC 3551 being the default one); an optional packet scheduler
+ for synchronizing RTP recv and send; blocking or non-blocking
+ IO for RTP sessions; multiplexed IO; some of RFC 4733 for
+ telephone events over RTP.
+ .
+ This package contains the API documentation.
+
+Package: libortp15
+Architecture: any
+Multi-Arch: same
+Pre-Depends: ${misc:Pre-Depends},
+Depends: ${misc:Depends},
+         ${shlibs:Depends},
+Description: Real-time Transport Protocol (RTP) stack
+ This library implements RFC 3550 (RTP) and offers an easy to
+ use API with high-level and low-level access. It is part of
+ Linphone.
+ .
+ The main features are support for multiple profiles (AV profile
+ RFC 3551 being the default one); an optional packet scheduler
+ for synchronizing RTP recv and send; blocking or non-blocking
+ IO for RTP sessions; multiplexed IO; some of RFC 4733 for
+ telephone events over RTP.

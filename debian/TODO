@@ -1,0 +1,1 @@
+- debhelper is running autoreconf even with --buildsystem=cmake due to #844504

@@ -1,0 +1,154 @@
+Fix various spelling mistakes throughout the codebase
+
+--- a/include/ortp/rtp.h
++++ b/include/ortp/rtp.h
+@@ -27,7 +27,7 @@
+ #define IPMAXLEN 20
+ #define UDP_MAX_SIZE 1500
+ #define RTP_FIXED_HEADER_SIZE 12
+-#define RTP_DEFAULT_JITTER_TIME 80	/*miliseconds*/
++#define RTP_DEFAULT_JITTER_TIME 80	/*milliseconds*/
+ #define RTP_DEFAULT_MULTICAST_TTL 5	/*hops*/
+ #define RTP_DEFAULT_MULTICAST_LOOPBACK 0  /*false*/
+ #define RTP_DEFAULT_DSCP 0x00  /*best effort*/
+--- a/include/ortp/rtpsession.h
++++ b/include/ortp/rtpsession.h
+@@ -498,7 +498,7 @@ ORTP_PUBLIC void rtp_session_set_jitter_
+ ORTP_PUBLIC void rtp_session_enable_adaptive_jitter_compensation(RtpSession *session, bool_t val);
+ ORTP_PUBLIC bool_t rtp_session_adaptive_jitter_compensation_enabled(RtpSession *session);
+ 
+-ORTP_PUBLIC void rtp_session_set_time_jump_limit(RtpSession *session, int miliseconds);
++ORTP_PUBLIC void rtp_session_set_time_jump_limit(RtpSession *session, int milliseconds);
+ ORTP_PUBLIC int rtp_session_join_multicast_group(RtpSession *session, const char *ip);
+ ORTP_PUBLIC int rtp_session_set_local_addr(RtpSession *session,const char *addr, int rtp_port, int rtcp_port);
+ ORTP_PUBLIC int rtp_session_get_local_port(const RtpSession *session);
+--- a/src/posixtimer.c
++++ b/src/posixtimer.c
+@@ -36,7 +36,7 @@
+ 
+ 
+ static struct timeval orig,cur;
+-static uint32_t posix_timer_time=0;		/*in milisecond */
++static uint32_t posix_timer_time=0;		/*in millisecond */
+ 
+ void posix_timer_init(void)
+ {
+@@ -55,7 +55,7 @@ void posix_timer_do(void)
+ 	ortp_gettimeofday(&cur,NULL);
+ 	time=((cur.tv_usec-orig.tv_usec)/1000 ) + ((cur.tv_sec-orig.tv_sec)*1000 );
+ 	if ( (diff=time-posix_timer_time)>50){
+-		ortp_warning("Must catchup %i miliseconds.",diff);
++		ortp_warning("Must catchup %i milliseconds.",diff);
+ 	}
+ 	while((diff = posix_timer_time-time) > 0)
+ 	{
+--- a/src/rtpsession.c
++++ b/src/rtpsession.c
+@@ -1451,7 +1451,7 @@ uint32_t rtp_session_get_current_recv_ts
+  * to reset the session in order to resynchronize, or any other action like stopping the call
+  * and reporting an error.
+  * @param session the rtp session
+- * @param milisecs a time interval in miliseconds
++ * @param milisecs a time interval in milliseconds
+  *
+ **/
+ void rtp_session_set_time_jump_limit(RtpSession *session, int milisecs){
+@@ -2033,7 +2033,7 @@ uint32_t rtp_session_time_to_ts(RtpSessi
+ 			("rtp_session_time_to_ts: use of unsupported payload type %d.", session->snd.pt);
+ 		return 0;
+ 	}
+-	/* the return value is in milisecond */
++	/* the return value is in millisecond */
+ 	return (uint32_t) (payload->clock_rate*(double) (millisecs/1000.0f));
+ }
+ 
+@@ -2050,14 +2050,14 @@ uint32_t rtp_session_ts_to_time (RtpSess
+ 			("rtp_session_ts_to_t: use of unsupported payload type %d.", session->snd.pt);
+ 		return 0;
+ 	}
+-	/* the return value is in milisecond */
++	/* the return value is in millisecond */
+ 	return (uint32_t) (1000.0 *
+ 			  ((double) timestamp /
+ 			   (double) payload->clock_rate));
+ }
+ 
+ 
+-/* time is the number of miliseconds elapsed since the start of the scheduler */
++/* time is the number of milliseconds elapsed since the start of the scheduler */
+ void rtp_session_process (RtpSession * session, uint32_t time, RtpScheduler *sched)
+ {
+ 	wait_point_lock(&session->snd.wp);
+--- a/src/rtpsession_inet.c
++++ b/src/rtpsession_inet.c
+@@ -738,7 +738,7 @@ int rtp_session_get_dscp(const RtpSessio
+  *rtp_session_get_local_port:
+  *@param session:	a rtp session for which rtp_session_set_local_addr() or rtp_session_set_remote_addr() has been called
+  *
+- *	This function can be useful to retrieve the local port that was randomly choosen by
++ *	This function can be useful to retrieve the local port that was randomly chosen by
+  *	rtp_session_set_remote_addr() when rtp_session_set_local_addr() was not called.
+  *
+  *	Returns: the local port used to listen for rtp packets, -1 if not set.
+--- a/src/scheduler.h
++++ b/src/scheduler.h
+@@ -43,7 +43,7 @@ struct _RtpScheduler {
+ 	ortp_thread_t thread;
+ 	int thread_running;
+ 	struct _RtpTimer *timer;
+-	uint32_t time_;       /*number of miliseconds elapsed since the start of the thread */
++	uint32_t time_;       /*number of milliseconds elapsed since the start of the thread */
+ 	uint32_t timer_inc;	/* the timer increment in milisec */
+ };
+ 
+--- a/src/telephonyevents.c
++++ b/src/telephonyevents.c
+@@ -102,7 +102,7 @@ mblk_t	*rtp_session_create_telephone_eve
+ 	if (tev_pt != -1){
+ 		PayloadType *cur_tev_pt=rtp_profile_get_payload(session->snd.profile, tev_pt);
+ 		if (!cur_tev_pt){
+-			ortp_error("Undefined telephone-event payload type %i choosen for sending telephone event", tev_pt);
++			ortp_error("Undefined telephone-event payload type %i chosen for sending telephone event", tev_pt);
+ 			tev_pt = -1;
+ 		}else if (cur_pt && cur_tev_pt->clock_rate != cur_pt->clock_rate){
+ 			ortp_warning("Telephone-event payload type %i has clockrate %i while main audio codec has clockrate %i: this is not permitted.",
+--- a/src/tests/rtpsend.c
++++ b/src/tests/rtpsend.c
+@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
+ 				return -1;
+ 			}
+ 			clockslide=atoi(argv[i]);
+-			ortp_message("Using clockslide of %i milisecond every 50 packets.",clockslide);
++			ortp_message("Using clockslide of %i millisecond every 50 packets.",clockslide);
+ 		}else if (strcmp(argv[i],"--with-jitter")==0){
+ 			ortp_message("Jitter will be added to outgoing stream.");
+ 			i++;
+@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
+ 		rtp_session_send_with_ts(session,buffer,i,user_ts);
+ 		user_ts+=160;
+ 		if (clockslide!=0 && user_ts%(160*50)==0){
+-			ortp_message("Clock sliding of %i miliseconds now",clockslide);
++			ortp_message("Clock sliding of %i milliseconds now",clockslide);
+ 			rtp_session_make_time_distorsion(session,clockslide);
+ 		}
+ 		/*this will simulate a burst of late packets */
+--- a/src/tests/rtpsend_stupid.c
++++ b/src/tests/rtpsend_stupid.c
+@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
+ 				return -1;
+ 			}
+ 			clockslide=atoi(argv[i]);
+-			ortp_message("Using clockslide of %i milisecond every 50 packets.",clockslide);
++			ortp_message("Using clockslide of %i millisecond every 50 packets.",clockslide);
+ 		}else if (strcmp(argv[i],"--with-ptime")==0){
+ 			ortp_message("Ptime related jitter will be added to outgoing stream.");
+ 			i++;
+@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
+ 			send_ts+=send_ts_inc;
+ 		}
+ 		if (clockslide!=0 && send_ts%(160*50)==0){
+-			ortp_message("Clock sliding of %i miliseconds now",clockslide);
++			ortp_message("Clock sliding of %i milliseconds now",clockslide);
+ 			rtp_session_make_time_distorsion(session,clockslide);
+ 		}
+ 	}
