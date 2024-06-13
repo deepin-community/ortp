@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of oRTP.
+ * This file is part of oRTP 
+ * (see https://gitlab.linphone.org/BC/public/ortp).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have dispatchd a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -75,13 +76,8 @@ extern "C" const char *rtp_bundle_get_session_mid(RtpBundle *bundle, RtpSession 
 	}
 }
 
-extern "C" int rtp_bundle_send_through_primary(RtpBundle *bundle, bool_t is_rtp, mblk_t *m, int flags,
-											   const struct sockaddr *destaddr, socklen_t destlen) {
-	return ((RtpBundleCxx *)bundle)->sendThroughPrimary(is_rtp, m, flags, destaddr, destlen);
-}
-
-extern "C" bool_t rtp_bundle_dispatch(RtpBundle *bundle, bool_t is_rtp, mblk_t *m, bool_t received_by_rtcp_mux) {
-	return ((RtpBundleCxx *)bundle)->dispatch(is_rtp, m, received_by_rtcp_mux);
+extern "C" bool_t rtp_bundle_dispatch(RtpBundle *bundle, bool_t is_rtp, mblk_t *m) {
+	return ((RtpBundleCxx *)bundle)->dispatch(is_rtp, m);
 }
 
 // C++ - Implementation
@@ -111,8 +107,6 @@ void RtpBundleCxx::addSession(const std::string &mid, RtpSession *session) {
 	sessions.emplace(mid, session);
 
 	session->bundle = (RtpBundle *)this;
-	qinit(&session->bundleq);
-	ortp_mutex_init(&session->bundleq_lock, NULL);
 
 	if (!primary) {
 		primary = session;
@@ -138,11 +132,8 @@ void RtpBundleCxx::removeSession(const std::string &mid) {
 		}
 		ssrcToMidMutex.unlock();
 
-		sessions.erase(mid);
-
 		session->second->bundle = NULL;
-		flushq(&session->second->bundleq, FLUSHALL);
-		ortp_mutex_destroy(&session->second->bundleq_lock);
+		sessions.erase(mid);
 	}
 }
 
@@ -161,8 +152,6 @@ void RtpBundleCxx::clear() {
 		RtpSession *session = entry.second;
 
 		session->bundle = NULL;
-		flushq(&session->bundleq, FLUSHALL);
-		ortp_mutex_destroy(&session->bundleq_lock);
 	}
 
 	primary = NULL;
@@ -198,30 +187,6 @@ const std::string &RtpBundleCxx::getSessionMid(RtpSession *session) const {
 	throw std::string("the session must be in the bundle!");
 }
 
-int RtpBundleCxx::sendThroughPrimary(bool isRtp, mblk_t *m, int flags, const struct sockaddr *destaddr,
-									 socklen_t destlen) const {
-	if (!primary)
-		return -1;
-
-	RtpTransport *primaryTransport;
-	if (isRtp) {
-		rtp_session_get_transports(primary, &primaryTransport, NULL);
-	} else {
-		rtp_session_get_transports(primary, NULL, &primaryTransport);
-	}
-
-	if (isRtp) {
-		destaddr = (struct sockaddr *)&primary->rtp.gs.rem_addr;
-		destlen = primary->rtp.gs.rem_addrlen;
-	} else {
-		destaddr = (struct sockaddr *)&primary->rtcp.gs.rem_addr;
-		destlen = primary->rtcp.gs.rem_addrlen;
-	}
-
-	// This will bypass the modifiers of the primary transport
-	return meta_rtp_transport_sendto(primaryTransport, m, flags, destaddr, destlen);
-}
-
 bool RtpBundleCxx::updateMid(const std::string &mid, const uint32_t ssrc, const uint16_t sequenceNumber, bool isRtp) {
 	auto session = sessions.find(mid);
 	if (session != sessions.end()) {
@@ -229,27 +194,25 @@ bool RtpBundleCxx::updateMid(const std::string &mid, const uint32_t ssrc, const 
 		if (entry == ssrcToMid.end()) {
 			Mid value = {mid, isRtp ? sequenceNumber : (uint16_t)0};
 			ssrcToMid[ssrc] = value;
-
+			ortp_message("Rtp Bundle [%p] SSRC [%u] paired with mid [%s]", this, ssrc, mid.c_str());
 			return true;
-		} else {
+		} else if ((*entry).second.mid != mid) {
 			if (isRtp) {
+				ortp_message("Rtp Bundle [%p]: received a mid update via RTP.", this);
 				if (entry->second.sequenceNumber < sequenceNumber) {
 					Mid value = {mid, sequenceNumber};
 					ssrcToMid[ssrc] = value;
-
-					return true;
 				}
 			} else {
 				// We should normally update the mid but we chose not to for simplicity
 				// since RTCP does not have a sequence number.
 				// https://tools.ietf.org/html/draft-ietf-mmusic-sdp-bundle-negotiation-54#page-24
 				ortp_warning("Rtp Bundle [%p]: received a mid update via RTCP, ignoring it.", this);
-
-				return true;
 			}
 		}
+		return true;
 	}
-
+	/* The mid is totally unknown, this is an error. */
 	return false;
 }
 
@@ -264,7 +227,7 @@ static void getSsrcFromSdes(void *userData, uint32_t ssrc, rtcp_sdes_type_t t, c
 
 static uint32_t getSsrcFromMessage(mblk_t *m, bool isRtp) {
 	if (isRtp) {
-		return ntohl(rtp_get_ssrc(m));
+		return rtp_get_ssrc(m);
 	}
 
 	const rtcp_common_header_t *ch = rtcp_get_common_header(m);
@@ -340,25 +303,25 @@ RtpSession *RtpBundleCxx::checkForSession(mblk_t *m, bool isRtp) {
 				std::string mid = std::string((char *)data, midSize);
 
 				// Update the mid map with the corresponding session
-				if (!updateMid(mid, ssrc, ntohs(rtp_get_seqnumber(m)), true)) {
+				if (!updateMid(mid, ssrc, rtp_get_seqnumber(m), true)) {
 					if (it == ssrcToMid.end()) {
 						ortp_warning("Rtp Bundle [%p]: SSRC %u not found and mid \"%s\" from msg (%d) does not "
 									 "correspond to any sessions",
-									 this, ssrc, mid.c_str(), (int)ntohs(rtp_get_seqnumber(m)));
+									 this, ssrc, mid.c_str(), (int)rtp_get_seqnumber(m));
 						return NULL;
 					}
 				}
 			} else {
 				if (it == ssrcToMid.end()) {
 					ortp_warning("Rtp Bundle [%p]: SSRC %u not found and msg (%d) does not have a mid extension header",
-								 this, ssrc, (int)ntohs(rtp_get_seqnumber(m)));
+								 this, ssrc, (int)rtp_get_seqnumber(m));
 					return NULL;
 				}
 			}
 		} else {
 			if (it == ssrcToMid.end()) {
 				ortp_warning("Rtp Bundle [%p]: SSRC %u not found and msg (%d) does not have an extension header", this,
-							 ssrc, (int)ntohs(rtp_get_seqnumber(m)));
+							 ssrc, (int)rtp_get_seqnumber(m));
 				return NULL;
 			}
 		}
@@ -383,13 +346,22 @@ RtpSession *RtpBundleCxx::checkForSession(mblk_t *m, bool isRtp) {
 
 	// Get the value again in case it has been updated
 	it = ssrcToMid.find(ssrc);
-
-	auto session = sessions.at(it->second.mid);
-	return session;
+	if (it == ssrcToMid.end()) {
+		ortp_warning("Rtp Bundle [%p]: SSRC %u not found in map to convert it to mid", this, ssrc);
+	} else {
+		try {
+			auto session = sessions.at(it->second.mid);
+			return session;
+		} catch (std::out_of_range&) {
+			ortp_warning("Rtp Bundle [%p]: Unable to find session with mid %s (SSRC %u)", this, it->second.mid.c_str(), ssrc);
+			return nullptr;
+		}
+	}
+	return nullptr;
 }
 
-bool RtpBundleCxx::dispatch(bool isRtp, mblk_t *m, bool receivedByRtcpMux) {
-	if (isRtp && !receivedByRtcpMux) {
+bool RtpBundleCxx::dispatch(bool isRtp, mblk_t *m) {
+	if (isRtp) {
 		return dispatchRtpMessage(m);
 	} else {
 		return dispatchRtcpMessage(m);
@@ -398,13 +370,15 @@ bool RtpBundleCxx::dispatch(bool isRtp, mblk_t *m, bool receivedByRtcpMux) {
 
 bool RtpBundleCxx::dispatchRtpMessage(mblk_t *m) {
 	RtpSession *session = checkForSession(m, true);
-	if (session == NULL)
+	if (session == NULL) {
+		freemsg(m);
 		return true;
+	}
 
 	if (session != primary) {
-		ortp_mutex_lock(&session->bundleq_lock);
-		putq(&session->bundleq, dupmsg(m));
-		ortp_mutex_unlock(&session->bundleq_lock);
+		ortp_mutex_lock(&session->rtp.gs.bundleq_lock);
+		putq(&session->rtp.gs.bundleq, m);
+		ortp_mutex_unlock(&session->rtp.gs.bundleq_lock);
 
 		return true;
 	}
@@ -439,9 +413,9 @@ bool RtpBundleCxx::dispatchRtcpMessage(mblk_t *m) {
 				primarymsg = tmp;
 			}
 		} else if (session != NULL) {
-			ortp_mutex_lock(&session->bundleq_lock);
-			putq(&session->bundleq, tmp);
-			ortp_mutex_unlock(&session->bundleq_lock);
+			ortp_mutex_lock(&session->rtcp.gs.bundleq_lock);
+			putq(&session->rtcp.gs.bundleq, tmp);
+			ortp_mutex_unlock(&session->rtcp.gs.bundleq_lock);
 		} else {
 			const rtcp_common_header_t *ch = rtcp_get_common_header(tmp);
 			ortp_warning("Rtp Bundle [%p]: Rctp msg (%d) ssrc=%u does not correspond to any sessions", this,
@@ -455,7 +429,7 @@ bool RtpBundleCxx::dispatchRtcpMessage(mblk_t *m) {
 		msgpullup(primarymsg, (size_t)-1);
 
 		// TODO: Fix when possible
-		int len = primarymsg->b_wptr - primarymsg->b_rptr;
+		size_t len = primarymsg->b_wptr - primarymsg->b_rptr;
 		memcpy(m->b_rptr, primarymsg->b_rptr, len);
 		m->b_wptr = m->b_rptr + len;
 
@@ -464,5 +438,6 @@ bool RtpBundleCxx::dispatchRtcpMessage(mblk_t *m) {
 		return false;
 	}
 
+	freemsg(m);
 	return true;
 }

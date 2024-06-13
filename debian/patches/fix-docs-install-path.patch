@@ -1,0 +1,18 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -206,7 +206,7 @@
+ 		)
+ 		add_custom_target(ortp-html-doc ALL DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/doc/html/index.html")
+ 		install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/doc/html"
+-			DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/ortp-${ORTP_VERSION}")
++			DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/ortp")
+ 	endif()
+ endif()
+ 
+@@ -262,5 +262,5 @@
+ 	"${CMAKE_CURRENT_SOURCE_DIR}/CHANGELOG.md" 
+ 	"${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.txt" 
+ 	"${CMAKE_CURRENT_SOURCE_DIR}/AUTHORS.md" 
+-	DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/ortp-${ORTP_VERSION}"
++	DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/ortp"
+ )

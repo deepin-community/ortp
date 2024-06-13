@@ -1,3 +1,48 @@
+ortp (1:5.2.0-2) unstable; urgency=medium
+
+  * Upload to unstable.
+
+ -- Bernhard Schmidt <berni@debian.org>  Fri, 28 Jul 2023 22:49:03 +0200
+
+ortp (1:5.2.0-1) experimental; urgency=medium
+
+  * New upstream version 5.2.0.
+  * Comply with Debian policy v4.6.2.
+
+ -- Dennis Filder <d.filder@web.de>  Mon, 19 Dec 2022 18:25:22 +0100
+
+ortp (1:5.1.64-2) unstable; urgency=medium
+
+  * Release to unstable.
+
+ -- Bernhard Schmidt <berni@debian.org>  Sun, 27 Nov 2022 17:33:08 +0100
+
+ortp (1:5.1.64-1) experimental; urgency=medium
+
+  * New upstream version 5.1.64
+  * Bump SOVERSION to 16 due to ABI break.
+  * Honour nodoc build profile
+  * Fix i386 FTBFS occurring on reproducible-builds.org
+
+ -- Dennis Filder <d.filder@web.de>  Tue, 04 Oct 2022 22:46:03 +0200
+
+ortp (1:5.0.37-2) unstable; urgency=medium
+
+  * Release to unstable.
+
+ -- Bernhard Schmidt <berni@debian.org>  Mon, 12 Sep 2022 10:58:11 +0200
+
+ortp (1:5.0.37-1) experimental; urgency=medium
+
+  [ Dennis Filder ]
+  * New upstream version 5.0.37
+  * Drop static library from libortp-dev.  File a bug if you need it back.
+  * Express a versioned pkg-config Requires.private: on bctoolbox
+    (Closes: #994437)
+  * arch:all and arch:any packages are now buildable separately
+
+ -- Bernhard Schmidt <berni@debian.org>  Fri, 21 Jan 2022 23:36:11 +0100
+
 ortp (1:4.4.13-2) unstable; urgency=medium
 
   * Team upload.

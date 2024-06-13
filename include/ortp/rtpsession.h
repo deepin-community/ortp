@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of oRTP.
+ * This file is part of oRTP 
+ * (see https://gitlab.linphone.org/BC/public/ortp).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -43,6 +44,7 @@
 #include <ortp/utils.h>
 #include <ortp/rtpsignaltable.h>
 #include <ortp/event.h>
+#include <ortp/fecstream.h>
 
 #define ORTP_AVPF_FEATURE_NONE 0
 #define ORTP_AVPF_FEATURE_TMMBR (1 << 0)
@@ -320,7 +322,8 @@ typedef struct _OrtpStream {
 	float average_upload_bw;
 	float average_download_bw;
 	bctbx_list_t *aux_destinations; /*list of OrtpAddress */
-	msgb_allocator_t allocator;
+	queue_t bundleq; /* For bundle mode */
+	ortp_mutex_t bundleq_lock;
 } OrtpStream;
 
 typedef struct _RtpStream
@@ -384,7 +387,6 @@ typedef struct _RtcpStream
 
 typedef struct _RtpSession RtpSession;
 
-
 /**
  * An object representing a bi-directional RTP session.
  * It holds sockets, jitter buffer, various counters (timestamp, sequence numbers...)
@@ -423,6 +425,7 @@ struct _RtpSession
 	OrtpRtcpXrStats rtcp_xr_stats;
 	RtpSessionMode mode;
 	struct _RtpScheduler *sched;
+	mblk_t *recv_block_cache;
 	uint32_t flags;
 	int dscp;
 	int multicast_ttl;
@@ -449,6 +452,10 @@ struct _RtpSession
 	rtp_stats_t stats;
 	bctbx_list_t *recv_addr_map;
 	uint32_t send_ts_offset; /*additional offset to add when sending packets */
+	/* bundle mode */
+	struct _RtpBundle *bundle; /* back pointer to the rtp bundle object */
+	/* fec option */
+	FecStream *fec_stream;
 	bool_t symmetric_rtp;
 	bool_t permissive; /*use the permissive algorithm*/
 	bool_t use_connect; /* use connect() on the socket */
@@ -465,11 +472,7 @@ struct _RtpSession
 	bool_t is_primary;  /* tells if this session is the primary of the rtp bundle */
 	
 	bool_t warn_non_working_pkt_info;
-
-	/* bundle mode */
-	struct _RtpBundle *bundle; /* back pointer to the rtp bundle object */
-	queue_t bundleq;
-	ortp_mutex_t bundleq_lock;
+	bool_t transfer_mode;
 };
 
 /**
@@ -627,6 +630,7 @@ ORTP_PUBLIC mblk_t * rtp_session_create_packet(RtpSession *session, size_t heade
 ORTP_PUBLIC mblk_t * rtp_session_create_packet_raw(const uint8_t *packet, size_t packet_size);
 ORTP_PUBLIC mblk_t * rtp_session_create_packet_with_data(RtpSession *session, uint8_t *payload, size_t payload_size, void (*freefn)(void*));
 ORTP_PUBLIC mblk_t * rtp_session_create_packet_in_place(RtpSession *session,uint8_t *buffer, size_t size, void (*freefn)(void*) );
+ORTP_PUBLIC mblk_t * rtp_session_create_packet_with_mixer_to_client_audio_level(RtpSession *session, size_t header_size, int mtc_extension_id, size_t audio_levels_size, rtp_audio_level_t *audio_levels, const uint8_t *payload, size_t payload_size);
 ORTP_PUBLIC int rtp_session_sendm_with_ts (RtpSession * session, mblk_t *mp, uint32_t userts);
 ORTP_PUBLIC int rtp_session_sendto(RtpSession *session, bool_t is_rtp, mblk_t *m, int flags, const struct sockaddr *destaddr, socklen_t destlen);
 ORTP_PUBLIC int rtp_session_recvfrom(RtpSession *session, bool_t is_rtp, mblk_t *m, int flags, struct sockaddr *from, socklen_t *fromlen);
@@ -705,6 +709,7 @@ ORTP_PUBLIC void rtp_session_add_contributing_source(RtpSession *session, uint32
 /* DEPRECATED: Use rtp_session_remove_contributing_source instead of rtp_session_remove_contributing_sources */
 #define rtp_session_remove_contributing_sources rtp_session_remove_contributing_source
 ORTP_PUBLIC void rtp_session_remove_contributing_source(RtpSession *session, uint32_t csrc);
+ORTP_PUBLIC void rtp_session_clear_contributing_sources(RtpSession *session);
 ORTP_PUBLIC mblk_t* rtp_session_create_rtcp_sdes_packet(RtpSession *session, bool_t full);
 
 ORTP_PUBLIC void rtp_session_get_last_recv_time(RtpSession *session, struct timeval *tv);
@@ -750,6 +755,7 @@ ORTP_PUBLIC void rtp_session_send_rtcp_fb_rpsi(RtpSession *session, uint8_t *bit
 ORTP_PUBLIC void rtp_session_send_rtcp_fb_tmmbr(RtpSession *session, uint64_t mxtbr);
 ORTP_PUBLIC void rtp_session_send_rtcp_fb_tmmbn(RtpSession *session, uint32_t ssrc);
 
+ORTP_PUBLIC void rtp_session_enable_transfer_mode(RtpSession *session, bool_t enable);
 
 /*private */
 ORTP_PUBLIC void rtp_session_init(RtpSession *session, int mode);
@@ -813,7 +819,7 @@ ORTP_PUBLIC const char *rtp_bundle_get_session_mid(RtpBundle *bundle, RtpSession
 
 ORTP_PUBLIC int rtp_bundle_send_through_primary(RtpBundle *bundle, bool_t is_rtp, mblk_t *m, int flags, const struct sockaddr *destaddr, socklen_t destlen);
 /* Returns FALSE if the rtp packet or at least one of the RTCP packet (compound) was for the primary */
-ORTP_PUBLIC bool_t rtp_bundle_dispatch(RtpBundle *bundle, bool_t is_rtp, mblk_t *m, bool_t received_by_rtcp_mux);
+ORTP_PUBLIC bool_t rtp_bundle_dispatch(RtpBundle *bundle, bool_t is_rtp, mblk_t *m);
 ORTP_PUBLIC void rtp_session_use_local_addr(RtpSession * session, const char * rtp_local_addr, const char * rtcp_local_addr);
 
 #ifdef __cplusplus
