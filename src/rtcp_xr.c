@@ -1,23 +1,26 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of oRTP.
+ * This file is part of oRTP 
+ * (see https://gitlab.linphone.org/BC/public/ortp).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
+#ifdef HAVE_CONFIG_H
+#include "ortp-config.h"
+#endif
 #include <math.h>
 
 #include "ortp/ortp.h"
@@ -49,7 +52,7 @@ static int rtcp_xr_rcvr_rtt_init(uint8_t *buf, RtpSession *session) {
 	block->bh.bt = RTCP_XR_RCVR_RTT;
 	block->bh.flags = 0; // Reserved bits
 	block->bh.length = htons(2);
-	ortp_gettimeofday(&tv, NULL);
+	bctbx_gettimeofday(&tv, NULL);
 	ntp = ortp_timeval_to_ntp(&tv);
 	block->ntp_timestamp_msw = htonl(ntp >> 32);
 	block->ntp_timestamp_lsw = htonl(ntp & 0xFFFFFFFF);
@@ -68,7 +71,7 @@ static int rtcp_xr_dlrr_init(uint8_t *buf, RtpSession *session) {
 	if (session->rtcp_xr_stats.last_rcvr_rtt_time.tv_sec != 0) {
 		struct timeval now;
 		double delay;
-		ortp_gettimeofday(&now, NULL);
+		bctbx_gettimeofday(&now, NULL);
 		delay = ((now.tv_sec - session->rtcp_xr_stats.last_rcvr_rtt_time.tv_sec)
 			+ ((now.tv_usec - session->rtcp_xr_stats.last_rcvr_rtt_time.tv_usec) * 1e-6)) * 65536;
 		dlrr = (uint32_t) delay;

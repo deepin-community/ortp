@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of oRTP.
+ * This file is part of oRTP 
+ * (see https://gitlab.linphone.org/BC/public/ortp).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -41,7 +42,7 @@ extern void av_profile_init(RtpProfile *profile);
 static void init_random_number_generator(void){
 #ifndef _WIN32
 	struct timeval t;
-	ortp_gettimeofday(&t,NULL);
+	bctbx_gettimeofday(&t,NULL);
 	srandom(t.tv_usec+t.tv_sec);
 #endif
 	/*on windows we're using rand_s, which doesn't require initialization*/
@@ -80,8 +81,12 @@ void ortp_init()
 	av_profile_init(&av_profile);
 	ortp_global_stats_reset();
 	init_random_number_generator();
-
+// HAVE_ATOMIC is mandatory but we let it there just in case we want to support other atomic algorithms.
+#ifdef HAVE_ATOMIC
+	ortp_message("oRTP-" ORTP_VERSION " initialized with Atomic protection.");
+#else
 	ortp_message("oRTP-" ORTP_VERSION " initialized.");
+#endif
 }
 
 

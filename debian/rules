@@ -4,7 +4,17 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
+include /usr/share/dpkg/pkg-info.mk
+export DEB_VERSION_UPSTREAM
+
+DEB_REQUESTED_PACKAGES := $(shell dh_listpackages)
+when-in-build-profile     = $(patsubst 0,$(3),$(patsubst 1,$(2),$(patsubst 01,1,0$(patsubst $(1),1,$(filter $(1),$(DEB_BUILD_PROFILES))))))
+when-not-in-build-profile = $(patsubst 0,$(3),$(patsubst 1,$(2),$(patsubst 11,0,1$(patsubst $(1),1,$(filter $(1),$(DEB_BUILD_PROFILES))))))
+when-building-package     = $(patsubst 0,$(3),$(patsubst 1,$(2),$(patsubst 01,1,0$(patsubst $(1),1,$(filter $(1),$(DEB_REQUESTED_PACKAGES))))))
+when-not-building-package = $(patsubst 0,$(3),$(patsubst 1,$(2),$(patsubst 11,0,1$(patsubst $(1),1,$(filter $(1),$(DEB_REQUESTED_PACKAGES))))))
+
 export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+ortp_so_version = $(shell sed -n 's@set(ORTP_SO_VERSION "*\([0-9]\+\)"*).*$$@\1@p' CMakeLists.txt)
 
 %:
 	dh $@ --buildsystem=cmake
@@ -12,4 +22,43 @@ export DEB_BUILD_MAINT_OPTIONS = hardening=+all
 # Upstream unconditionally sets CMAKE_INSTALL_RPATH. Make it ineffective by
 # setting CMAKE_SKIP_RPATH
 override_dh_auto_configure:
-	dh_auto_configure -- -DCMAKE_SKIP_RPATH=ON
+	[ -n "$(ortp_so_version)" -a "$(ortp_so_version)" -ge 16 ] # break build early if SOVERSION parsing fails
+	dh_auto_configure -- -DCMAKE_SKIP_RPATH=ON -DENABLE_STATIC=no -DENABLE_UNIT_TESTS=no -DDEB_VERSION_UPSTREAM=$(DEB_VERSION_UPSTREAM)
+
+override_dh_auto_build-arch:
+	dh_auto_build -O--buildsystem=cmake -- ortp
+
+override_dh_auto_build-indep:
+ifeq (x,$(call when-building-package,libortp-doc,x))
+	dh_auto_build -O--buildsystem=cmake -- ortp-html-doc
+endif
+
+execute_after_dh_auto_install-indep:
+	rm -f debian/tmp/usr/share/doc/ortp/CHANGELOG.md
+	true
+
+# The version number specified here relies on all linphone-stack
+# libraries being versioned in lock-step which is apparently their
+# approach now.
+execute_after_dh_auto_install-arch:
+	echo 'Requires.private: bctoolbox >= $(DEB_VERSION_UPSTREAM)' >> debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)/pkgconfig/ortp.pc
+	rm -f debian/tmp/usr/share/doc/ortp/CHANGELOG.md
+
+execute_before_dh_auto_install-arch:
+# fake arch-independent build artefacts
+	if [ ! -d obj-$(DEB_HOST_GNU_TYPE)/doc/html ]; then \
+		mkdir -p obj-$(DEB_HOST_GNU_TYPE)/doc/html ; \
+	fi
+
+execute_before_dh_auto_install-indep:
+# fake arch-dependent build artefacts
+	if [ ! -f obj-$(DEB_HOST_GNU_TYPE)/src/libortp.so.$(ortp_so_version) ]; then \
+		touch obj-$(DEB_HOST_GNU_TYPE)/src/libortp.so.$(ortp_so_version); \
+	fi
+	if [ ! -L obj-$(DEB_HOST_GNU_TYPE)/src/libortp.so ]; then \
+		ln -fs obj-$(DEB_HOST_GNU_TYPE)/src/libortp.so.$(ortp_so_version) \
+			obj-$(DEB_HOST_GNU_TYPE)/src/libortp.so; \
+	fi
+
+override_dh_autoreconf_clean:
+override_dh_autoreconf:

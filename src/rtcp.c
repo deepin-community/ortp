@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of oRTP.
+ * This file is part of oRTP 
+ * (see https://gitlab.linphone.org/BC/public/ortp).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -24,7 +25,9 @@
  *  Copyright  2004  Simon Morlat
  *  Email simon dot morlat at linphone dot org
  ****************************************************************************/
-
+#ifdef HAVE_CONFIG_H
+#include "ortp-config.h"
+#endif
 #include "ortp/ortp.h"
 #include "ortp/rtpsession.h"
 #include "ortp/rtcp.h"
@@ -93,8 +96,6 @@ static void sdes_chunk_set_ssrc(mblk_t *m, uint32_t ssrc){
 	sdes_chunk_t *sc=(sdes_chunk_t*)m->b_rptr;
 	sc->csrc=htonl(ssrc);
 }
-
-#define sdes_chunk_get_ssrc(m) ntohl(((sdes_chunk_t*)((m)->b_rptr))->csrc)
 
 static mblk_t * sdes_chunk_pad(mblk_t *m){
 	return appendb(m,"",1,TRUE);
@@ -190,6 +191,11 @@ void rtp_session_remove_contributing_source(RtpSession *session, uint32_t ssrc) 
 	rtp_session_rtcp_send(session,tmp);
 }
 
+void rtp_session_clear_contributing_sources(RtpSession *session) {
+	queue_t *q=&session->contributing_sources;
+	flushq(q, 0);
+}
+
 void rtcp_common_header_init(rtcp_common_header_t *ch, RtpSession *s,int type, int rc, size_t bytes_len){
 	rtcp_common_header_set_version(ch,2);
 	rtcp_common_header_set_padbit(ch,0);
@@ -218,7 +224,7 @@ mblk_t* rtp_session_create_rtcp_sdes_packet(RtpSession *session, bool_t full) {
 
 	if (full == TRUE) {
 		q = &session->contributing_sources;
-		for (tmp = qbegin(q); !qend(q, tmp); tmp = qnext(q, mp)) {
+		for (tmp = qbegin(q); !qend(q, tmp); tmp = qnext(q, tmp)) {
 			m = concatb(m, dupmsg(tmp));
 			rc++;
 		}
@@ -231,7 +237,7 @@ mblk_t* rtp_session_create_rtcp_sdes_packet(RtpSession *session, bool_t full) {
 static void sender_info_init(sender_info_t *info, RtpSession *session){
 	struct timeval tv;
 	uint64_t ntp;
-	ortp_gettimeofday(&tv,NULL);
+	bctbx_gettimeofday(&tv,NULL);
 	ntp=ortp_timeval_to_ntp(&tv);
 	info->ntp_timestamp_msw=htonl(ntp >>32);
 	info->ntp_timestamp_lsw=htonl(ntp & 0xFFFFFFFF);
@@ -293,7 +299,7 @@ static void report_block_init(report_block_t *b, RtpSession *session){
 	if (stream->last_rcv_SR_time.tv_sec!=0){
 		struct timeval now;
 		double delay;
-		ortp_gettimeofday(&now,NULL);
+		bctbx_gettimeofday(&now,NULL);
 		delay= (now.tv_sec-stream->last_rcv_SR_time.tv_sec)+ ((now.tv_usec-stream->last_rcv_SR_time.tv_usec)*1e-6);
 		delay= (delay*65536);
 		delay_snc_last_sr=(uint32_t) delay;
@@ -346,7 +352,7 @@ static void extended_statistics( RtpSession *session, report_block_t * rb ) {
 
 		session->rtp.jitter_stats.max_jitter = jitter ;
 
-		ortp_gettimeofday( &now, NULL );
+		bctbx_gettimeofday( &now, NULL );
 		session->rtp.jitter_stats.max_jitter_ts = ( now.tv_sec * 1000LL ) + ( now.tv_usec / 1000LL );
 	}
 	/* compute mean jitter buffer size */
@@ -384,8 +390,8 @@ static size_t rtcp_app_init(RtpSession *session, uint8_t *buf, uint8_t subtype, 
 	if (size<sizeof(rtcp_app_t)) return 0;
 	rtcp_common_header_init(&app->ch,session,RTCP_APP,subtype,size);
 	app->ssrc=htonl(session->snd.ssrc);
-	memset(app->name, 0, 4);
-	strncpy(app->name, name, sizeof(app->name) - 1);
+	memset(app->name, 0, sizeof(app->name));
+	memcpy(app->name, name, sizeof(app->name));
 	return sizeof(rtcp_app_t);
 }
 
@@ -563,7 +569,7 @@ static void rtp_session_schedule_first_rtcp_send(RtpSession *session) {
 	sa->avg_rtcp_size = (float)(overhead + report_size + sdes_size + xr_size);
 	sa->initialized = TRUE;
 
-	tc = ortp_get_cur_time_ms();
+	tc = bctbx_get_cur_time_ms();
 	compute_rtcp_interval(session);
 	if (sa->T_rr > 0) sa->tn = tc + sa->T_rr;
 	sa->tp = tc;
@@ -600,7 +606,7 @@ void rtp_session_send_fb_rtcp_packet_and_reschedule(RtpSession *session) {
 }
 
 void rtp_session_run_rtcp_send_scheduler(RtpSession *session) {
-	uint64_t tc = ortp_get_cur_time_ms();
+	uint64_t tc = bctbx_get_cur_time_ms();
 	OrtpRtcpSendAlgorithm *sa = &session->rtcp.send_algo;
 
 	if (tc >= sa->tn) {
@@ -712,11 +718,11 @@ bool_t ortp_loss_rate_estimator_process_report_block(OrtpLossRateEstimator *obj,
 		/*first report cannot be considered, since we don't know the interval it covers*/
 		obj->last_ext_seq=extseq;
 		obj->last_cum_loss=cum_loss;
-		obj->last_estimate_time_ms=ortp_get_cur_time_ms();
+		obj->last_estimate_time_ms=bctbx_get_cur_time_ms();
 		return FALSE;
 	}
 	diff=extseq-obj->last_ext_seq;
-	curtime=ortp_get_cur_time_ms();
+	curtime=bctbx_get_cur_time_ms();
 	if (diff<0 || diff>obj->min_packet_count_interval * 100){
 		if (extseq==0){
 			/*when extseq reset to 0, it probably means that rtp_session_sync was called but
@@ -733,7 +739,7 @@ bool_t ortp_loss_rate_estimator_process_report_block(OrtpLossRateEstimator *obj,
 	}else if (diff>obj->min_packet_count_interval && curtime-obj->last_estimate_time_ms>=obj->min_time_ms_interval){
 		/*we have sufficient interval*/
 		int32_t new_losses=cum_loss-obj->last_cum_loss;
-		
+
 #if 0 /*SM: the following code try to takes into account sent duplicates - however by doing this it creates a bias in the loss rate computation
 		that can sometimes result in a negative loss rate, even if there is no duplicate.
 		Since the rate control doesn't use duplicates anymore, there is no good reason to take this into account.

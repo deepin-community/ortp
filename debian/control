@@ -1,26 +1,26 @@
 Source: ortp
 Priority: optional
 Maintainer: Debian VoIP Team <pkg-voip-maintainers@lists.alioth.debian.org>
-Uploaders: Kilian Krause <kilian@debian.org>,
-           Tzafrir Cohen <tzafrir@debian.org>,
-           Felix Lechner <felix.lechner@gmail.com>,
+Uploaders: Felix Lechner <felix.lechner@gmail.com>,
            Bernhard Schmidt <berni@debian.org>,
-Build-Depends: cmake (>= 3),
-               debhelper-compat (= 12),
-               doxygen,
-               libbctoolbox-dev (>= 4.4.0~),
-Standards-Version: 4.5.0
+Build-Depends: cmake,
+               debhelper-compat (= 13),
+               libbctoolbox-dev (>= 5.2.0~),
+Build-Depends-Indep: doxygen <!nodoc>,
+Standards-Version: 4.6.2
+Rules-Requires-Root: no
 Section: libs
-Homepage: http://www.linphone.org/technical-corner/ortp/overview
+Homepage: https://www.linphone.org/technical-corner/ortp
 Vcs-Browser: https://salsa.debian.org/pkg-voip-team/linphone-stack/ortp
 Vcs-Git: https://salsa.debian.org/pkg-voip-team/linphone-stack/ortp.git
+Description: Real-time Transport Protocol (RTP) library
 
 Package: libortp-dev
 Section: libdevel
 Architecture: any
 Multi-Arch: same
-Depends: libbctoolbox-dev (>= 4.4.0~),
-         libortp15 (= ${binary:Version}),
+Depends: libbctoolbox-dev (>= 5.2.0~),
+         libortp16 (= ${binary:Version}),
          ${misc:Depends},
 Description: Development files for the ortp RTP library
  This library implements RFC 3550 (RTP) and offers an easy to
@@ -37,6 +37,7 @@ Description: Development files for the ortp RTP library
 
 Package: libortp-doc
 Section: doc
+Build-Profiles: <!nodoc>
 Architecture: all
 Multi-Arch: foreign
 Depends: libjs-jquery,
@@ -55,7 +56,7 @@ Description: oRTP API documentation
  .
  This package contains the API documentation.
 
-Package: libortp15
+Package: libortp16
 Architecture: any
 Multi-Arch: same
 Pre-Depends: ${misc:Pre-Depends},

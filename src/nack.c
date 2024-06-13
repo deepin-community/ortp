@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of oRTP.
+ * This file is part of oRTP 
+ * (see https://gitlab.linphone.org/BC/public/ortp).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -26,7 +27,7 @@ static mblk_t *find_packet_with_sequence_number(const queue_t *q, const uint16_t
 	mblk_t *tmp;
 
 	for (tmp = qbegin(q); !qend(q, tmp); tmp = qnext(q, tmp)) {
-		if (ntohs(rtp_get_seqnumber(tmp)) == seq_number) {
+		if (rtp_get_seqnumber(tmp) == seq_number) {
 			return tmp;
 		}
 	}
@@ -92,7 +93,7 @@ static int ortp_nack_rtp_process_on_send(RtpTransportModifier *t, mblk_t *msg) {
 		// Stock the packet before sending it
 		putq(&userData->sent_packets, dupmsg(msg));
 
-		//ortp_message("OrtpNackContext [%p]: Stocking packet with pid=%hu (seq=%hu)", userData, ntohs(rtp_get_seqnumber(msg)), userData->session->rtp.snd_seq);
+		//ortp_message("OrtpNackContext [%p]: Stocking packet with pid=%hu (seq=%hu)", userData, rtp_get_seqnumber(msg), userData->session->rtp.snd_seq);
 
 		bctbx_mutex_unlock(&userData->sent_packets_mutex);
 	}
@@ -145,7 +146,7 @@ static int ortp_nack_rtcp_process_on_send(RtpTransportModifier *t, mblk_t *msg) 
 
 			// Start the timer that will decrase the min jitter if no NACK is sent
 			userData->decrease_jitter_timer_running = TRUE;
-			userData->decrease_jitter_timer_start = ortp_get_cur_time_ms();
+			userData->decrease_jitter_timer_start = bctbx_get_cur_time_ms();
 
 			break;
 		}
@@ -249,7 +250,7 @@ void ortp_nack_context_set_max_packet(OrtpNackContext *ctx, int max) {
 
 void ortp_nack_context_process_timer(OrtpNackContext *ctx) {
 	if (ctx->decrease_jitter_timer_running) {
-		uint64_t current_time = ortp_get_cur_time_ms();
+		uint64_t current_time = bctbx_get_cur_time_ms();
 		if (current_time - ctx->decrease_jitter_timer_start >= DECREASE_JITTER_DELAY) {
 			OrtpEvent *ev;
 			OrtpEventData *evd;

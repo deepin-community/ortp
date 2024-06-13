@@ -1,23 +1,23 @@
 ############################################################################
-# CMakeLists.txt
-# Copyright (C) 2014  Belledonne Communications, Grenoble France
+# Copyright (c) 2010-2022 Belledonne Communications SARL.
+#
+# This file is part of oRTP 
+# (see https://gitlab.linphone.org/BC/public/ortp).
 #
 ############################################################################
 #
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# GNU Affero General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
 ############################################################################
 
 set(LIBS )
@@ -37,6 +37,7 @@ set(ORTP_SOURCE_FILES_C
 	congestiondetector.c
 	event.c
 	extremum.c
+	fecstream.c
 	jitterctl.c
 	kalmanrls.c
 	logging.c
@@ -50,6 +51,8 @@ set(ORTP_SOURCE_FILES_C
 	rtcp_fb.c
 	rtcp_xr.c
 	rtcpparse.c
+	rtpaudiolevel.c
+	rtpframemarking.c
 	rtpparse.c
 	rtpprofile.c
 	rtpsession.c
@@ -64,6 +67,7 @@ set(ORTP_SOURCE_FILES_C
 	utils.c
 )
 set(ORTP_SOURCE_FILES_CXX
+	dblk.cc	#HAVE_ATOMIC is mandatory
 	rtpbundle.cc
 )
 
@@ -77,6 +81,7 @@ if(WIN32)
 		list(APPEND ORTP_SOURCE_FILES_CXX winrttimer.cpp winrttimer.h)
 		set_source_files_properties(winrttimer.cpp PROPERTIES COMPILE_FLAGS "/ZW /AI\$(WindowsSDK_MetadataPath)")
 	endif()
+	list(APPEND LIBS ws2_32)# symbols for in6addr_any
 endif()
 
 if(WIN32)
@@ -92,12 +97,18 @@ endif()
 bc_apply_compile_flags(ORTP_SOURCE_FILES_C STRICT_OPTIONS_CPP STRICT_OPTIONS_C)
 bc_apply_compile_flags(ORTP_SOURCE_FILES_CXX STRICT_OPTIONS_CPP STRICT_OPTIONS_CXX)
 
+
+
 if(ENABLE_STATIC)
 	add_library(ortp-static STATIC ${ORTP_HEADER_FILES} ${ORTP_SOURCE_FILES_C} ${ORTP_SOURCE_FILES_CXX})
 	set_target_properties(ortp-static PROPERTIES OUTPUT_NAME ortp)
 	set_target_properties(ortp-static PROPERTIES CXX_STANDARD 11 CXX_STANDARD_REQUIRED ON)
 	target_compile_definitions(ortp-static PRIVATE "ORTP_EXPORTS")
-	target_link_libraries(ortp-static INTERFACE ${LIBS})
+	target_include_directories(ortp-static
+		PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+		$<INSTALL_INTERFACE:include>
+	)
+	target_link_libraries(ortp-static PUBLIC bctoolbox INTERFACE ${LIBS})
 	install(TARGETS ortp-static EXPORT ${EXPORT_TARGET_NAME}Targets
 		ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 		PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
@@ -113,7 +124,7 @@ if(ENABLE_SHARED)
 		else()
 			set(MIN_OS ${CMAKE_OSX_DEPLOYMENT_TARGET})
 		endif()
-		set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/build/osx/")
+		set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/build/osx/")
 		set_target_properties(ortp PROPERTIES
 			FRAMEWORK TRUE
 			MACOSX_FRAMEWORK_IDENTIFIER org.linphone.ortp
@@ -130,12 +141,13 @@ if(ENABLE_SHARED)
 	endif()
 	target_compile_definitions(ortp PRIVATE "ORTP_EXPORTS")
 	target_include_directories(ortp
-		INTERFACE $<INSTALL_INTERFACE:include>
+		PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+		$<INSTALL_INTERFACE:include>
 	)
 	target_link_libraries(ortp PUBLIC bctoolbox PRIVATE ${LIBS})
 	if(MSVC)
 		if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-			install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/ortp.pdb
+			install(FILES $<TARGET_PDB_FILE:ortp>
 				DESTINATION ${CMAKE_INSTALL_BINDIR}
 				PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
 			)

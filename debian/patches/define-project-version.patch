@@ -1,0 +1,20 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -28,7 +28,7 @@
+     cmake_policy(SET CMP0077 NEW)
+ endif()
+ 
+-project(oRTP VERSION 5.2.0)
++project(oRTP VERSION ${DEB_VERSION_UPSTREAM})
+ 
+ 
+ 
+@@ -36,7 +36,7 @@
+ set(ORTP_MINOR_VERSION ${PROJECT_VERSION_MINOR})
+ set(ORTP_MICRO_VERSION ${PROJECT_VERSION_PATCH})
+ set(ORTP_VERSION ${PROJECT_VERSION})
+-set(ORTP_SO_VERSION "15") # incremented for 4.4.0 version.
++set(ORTP_SO_VERSION "16") # incremented for 5.1.0 version.
+ set(ORTP_DOC_VERSION "${ORTP_VERSION_MAJOR}.${ORTP_VERSION_MINOR}")
+ 
+ 

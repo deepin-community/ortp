@@ -1,0 +1,9 @@
+--- a/ortp.pc.in
++++ b/ortp.pc.in
+@@ -6,5 +6,5 @@
+ Name: oRTP 
+ Description: Implement the RFC3550 (RTP) with a easy to use API with high and low level access.
+ Version: @ORTP_PKGCONFIG_VERSION@
+-Libs: -L@libdir@ -lortp @ORTPDEPS_LIBS@
++Libs: -L@CMAKE_INSTALL_FULL_LIBDIR@ -lortp @ORTPDEPS_LIBS@
+ Cflags: -I@includedir@ @ORTPDEPS_CFLAGS@

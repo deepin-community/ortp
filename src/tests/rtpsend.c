@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of oRTP.
+ * This file is part of oRTP 
+ * (see https://gitlab.linphone.org/BC/public/ortp).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -21,7 +22,7 @@
 #include <signal.h>
 #include <stdlib.h>
 
-#ifndef _WIN32 
+#ifndef _WIN32
 #include <sys/types.h>
 #include <sys/time.h>
 #include <stdio.h>
@@ -69,24 +70,24 @@ int main(int argc, char *argv[])
 			jitter=atoi(argv[i]);
 		}
 	}
-	
+
 	ortp_init();
 	ortp_scheduler_init();
 	ortp_set_log_level_mask(NULL, ORTP_MESSAGE|ORTP_WARNING|ORTP_ERROR);
-	session=rtp_session_new(RTP_SESSION_SENDONLY);	
-	
+	session=rtp_session_new(RTP_SESSION_SENDONLY);
+
 	rtp_session_set_scheduling_mode(session,1);
 	rtp_session_set_blocking_mode(session,1);
 	rtp_session_set_connected_mode(session,TRUE);
 	rtp_session_set_remote_addr(session,argv[2],atoi(argv[3]));
 	rtp_session_set_payload_type(session,0);
-	
+
 	ssrc=getenv("SSRC");
 	if (ssrc!=NULL) {
 		printf("using SSRC=%i.\n",atoi(ssrc));
 		rtp_session_set_ssrc(session,atoi(ssrc));
 	}
-		
+
 	#ifndef _WIN32
 	infile=fopen(argv[1],"r");
 	#else
@@ -110,7 +111,7 @@ int main(int argc, char *argv[])
 		/*this will simulate a burst of late packets */
 		if (jitter && (user_ts%(8000)==0)) {
 			ortp_message("Simulating late packets now (%i milliseconds)",jitter);
-			ortp_sleep_ms(jitter);
+			bctbx_sleep_ms(jitter);
 		}
 	}
 

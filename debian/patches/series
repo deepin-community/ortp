@@ -1,1 +1,4 @@
 fix-spelling
+fix-docs-install-path.patch
+define-project-version.patch
+fix-ortp.pc.in.patch
